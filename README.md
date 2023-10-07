@@ -1,2 +1,3 @@
-# skolkovo22
-PHP Magazine
+# PHP Magazine
+
+Let's go!
