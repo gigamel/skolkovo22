@@ -118,16 +118,17 @@ class ServiceConfigurator implements ConfiguratorInterface
         $config = $serviceConfig[$parameter->getName()];
         if (is_string($config) && '@' === substr($config, 0, 1)) {
             $id = substr($config, 1);
-            if (!$container->has($id)) {
-                $this->loader->import($id, 'php');
-                return $this->newInstance(
-                    $id,
-                    $parameter->getType()->getName(),
-                    $container
-                );
+            if ($container->has($id)) {
+                return $container->get($id);
             }
             
-            return $container->get($id);
+            $this->loader->import($id, 'php');
+            
+            return $this->newInstance(
+                $id,
+                $parameter->getType()->getName(),
+                $container
+            );
         }
         
         return $config;
