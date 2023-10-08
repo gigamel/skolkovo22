@@ -12,24 +12,24 @@ use Skolkovo22\Util\Catcher;
 
 final class Magazine
 {
-	/**
-	 * @return void
-	 */
-	public function run(): void
-	{   
+    /**
+     * @return void
+     */
+    public function run(): void
+    {   
         try {
             $this->mainProcess();
         } catch (\Throwable $e) {
             Catcher::show($e);
         }
-	}
+    }
     
     /**
      * @return void
      */
     private function mainProcess(): void
     {
-	    $servicesContainer = $this->loadServicesContainer();
+        $servicesContainer = $this->loadServicesContainer();
         $request = new ClientMessage();
         
         $router = new Router($this->loadRoutes());
@@ -41,7 +41,7 @@ final class Magazine
 
     /**
      * @param string $actionClassName
-     * @param ServiceContainer $serviceContainer
+     * @param ServicesContainer $servicesContainer
      * @param ClientMessageInterface $request
      *
      * @return void
@@ -57,29 +57,29 @@ final class Magazine
             $action = new $actionClassName();
         }
         
-        $response = $action($request);
-        
-        echo $response->getContent();
+        echo $action($request)->getContent();
     }
 
     /**
-	 * @return ServicesContainer
+     * @return ServicesContainer
      *
      * @throws \RuntimeException
-	 */
-	private function loadServicesContainer(): ServicesContainer
-	{
+     */
+    private function loadServicesContainer(): ServicesContainer
+    {
         $loader = new ConfigLoader(__DIR__ . '/../config/services');
+        
         $configurator = new ServiceConfigurator($loader);
-        $serviceContainer = new ServicesContainer($configurator);
+        $servicesContainer = new ServicesContainer($configurator);
 
         $services = require_once(__DIR__ . '/../config/services.php');
         foreach ($services as $id => $service) {
-            $serviceContainer->put($id, $service);
+            $loader->import($id, 'php');
+            $servicesContainer->put($id, $service);
         }
         
-        return $serviceContainer;
-	}
+        return $servicesContainer;
+    }
     
     /**
      * @return RoutesCollection

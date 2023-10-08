@@ -10,14 +10,22 @@ final class Logger
     /** @var callbable|null */
     private $formatter;
     
+    /** @var Hasher */
+    private $hasher;
+    
     /**
      * @param string $stream
      * @param callable $formatter
+     * @param Hasher $hasher
      */
-    public function __construct(string $stream, callable $formatter = null)
-    {
+    public function __construct(
+        string $stream,
+        callable $formatter = null,
+        Hasher $hasher
+    ) {
         $this->stream = $stream;
         $this->formatter = $formatter;
+        $this->hasher = $hasher;
     }
     
     /**
@@ -35,9 +43,12 @@ final class Logger
             $message = 'Logging in default stream, message: ' . $message;
         }
         
-        $date = date(\DateTimeInterface::RFC3339);        
-        $message = sprintf('[%s] %s', $date, $message) . PHP_EOL;
+        $message = sprintf(
+            '[%s] %s',
+            date(\DateTimeInterface::RFC3339),
+            $this->hasher->md5($message)
+        ) . PHP_EOL;
         
-        error_log($message, 3, __DIR__ . '/../../var/log/message.log');
+        error_log($message, 3, __DIR__ . '/../../../var/log/message.log');
     }
 }

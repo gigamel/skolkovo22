@@ -1,17 +1,7 @@
 <?php
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/PHPClass.php to edit this template
- */
-
 namespace Skolkovo22\DI;
 
-/**
- * Description of Configurator
- *
- * @author gigamel
- */
 class ServiceConfigurator implements ConfiguratorInterface
 {
     /** @var LoaderInterface */
@@ -28,8 +18,11 @@ class ServiceConfigurator implements ConfiguratorInterface
     /**
      * @inheritDoc
      */
-    public function newInstance(string $id, string $className)
-    {
+    public function newInstance(
+        string $id,
+        string $className,
+        ContainerInterface $container
+    ) {
         $rc = new \ReflectionClass($className);
 
         if ($rc->isAbstract()) {
@@ -53,13 +46,13 @@ class ServiceConfigurator implements ConfiguratorInterface
             );
         }
         
-        $this->loader->import($id, 'php');
         $serviceConfig = $this->loader->get($id);
 
         $parameters = [];
         foreach ($constructor->getParameters() as $parameter) {
             $parameters[$parameter->getName()]
                 = $this->resolveParameter(
+                    $container,
                     $parameter,
                     $serviceConfig,
                     $className
@@ -70,6 +63,7 @@ class ServiceConfigurator implements ConfiguratorInterface
     }
     
     /**
+     * @param ContainerInterface $container
      * @param \ReflectionParameter $parameter
      * @param array $serviceConfig
      * @param string $className
@@ -79,13 +73,18 @@ class ServiceConfigurator implements ConfiguratorInterface
      * @throws \DomainException
      */
     protected function resolveParameter(
+        ContainerInterface $container,
         \ReflectionParameter $parameter,
         array $serviceConfig,
         string $className
     ) {
         switch (true) {
             case array_key_exists($parameter->getName(), $serviceConfig):
-                return $serviceConfig[$parameter->getName()];
+                return $this->resolveConfig(
+                    $container,
+                    $parameter,
+                    $serviceConfig
+                );
 
             case $parameter->isDefaultValueAvailable():
                 return $parameter->getDefaultValue();
@@ -102,5 +101,35 @@ class ServiceConfigurator implements ConfiguratorInterface
                     )
                 );
         }
+    }
+    
+    /**
+     * @param ContainerInterface $container
+     * @param \ReflectionParameter $parameter
+     * @param array $serviceConfig
+     *
+     * @return mixed
+     */
+    protected function resolveConfig(
+        ContainerInterface $container,
+        \ReflectionParameter $parameter,
+        array $serviceConfig
+    ) {
+        $config = $serviceConfig[$parameter->getName()];
+        if (is_string($config) && '@' === substr($config, 0, 1)) {
+            $id = substr($config, 1);
+            if (!$container->has($id)) {
+                $this->loader->import($id, 'php');
+                return $this->newInstance(
+                    $id,
+                    $parameter->getType()->getName(),
+                    $container
+                );
+            }
+            
+            return $container->get($id);
+        }
+        
+        return $config;
     }
 }

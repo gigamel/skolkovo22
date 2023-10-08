@@ -45,5 +45,7 @@ pre {
 }
 </style>
         ';
+        
+        self::$isShownCSS = true;
     }
 }

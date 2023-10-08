@@ -9,4 +9,5 @@ return [
 
         return $message;
     },
+    'hasher' => '@app.hasher',
 ];

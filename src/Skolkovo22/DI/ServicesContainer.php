@@ -43,7 +43,8 @@ class ServicesContainer implements ContainerInterface
         
         $this->container[$id] = $this->configurator->newInstance(
             $id,
-            $className
+            $className,
+            $this
         );
     }
     
