@@ -74,6 +74,10 @@ final class Magazine
 
         $services = require_once(__DIR__ . '/../config/services.php');
         foreach ($services as $id => $service) {
+            if ($servicesContainer->has($id)) {
+                continue;
+            }
+            
             $loader->import($id, 'php');
             $servicesContainer->put($id, $service);
         }
